@@ -24,6 +24,7 @@ class RegisterRequest extends FormRequest
     {
         return [
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
+            'name' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string', 'min:8'],
             'passkey' => ['nullable', 'string', 'digits:6'],
             'role' => ['sometimes', 'string', 'in:'.User::ROLE_ADMIN.','.User::ROLE_OPERATOR],
