@@ -40,4 +40,7 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('bahan', BahanController::class);
     Route::get('bahan/{bahan}/komposisi', [BahanController::class, 'komposisi']);
     Route::put('bahan/{bahan}/komposisi', [BahanController::class, 'updateKomposisi']);
+
+    Route::get('ref/metode-pembelian', [\App\Http\Controllers\V1\ReferensiController::class, 'getMetodePembelian']);
+    Route::get('ref/metode-pembayaran', [\App\Http\Controllers\V1\ReferensiController::class, 'getMetodePembayaran']);
 });
