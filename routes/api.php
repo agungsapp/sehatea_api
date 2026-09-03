@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\V1\BahanController;
 use App\Http\Controllers\V1\ProdukController;
+use App\Http\Controllers\V1\TransaksiController;
 use App\Http\Support\ApiResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +31,7 @@ Route::prefix('v1')->group(function () {
         // admin
 
         // operator
+        Route::apiResource('transaksi', TransaksiController::class);
     });
     // bersama
     Route::middleware('role:admin')->get('/admin/dashboard', function () {
