@@ -17,6 +17,7 @@ class Bahan extends Model
         'nama',
         'jenis',
         'satuan_dasar',
+        'netto',
         'monitor_stok',
         'stok_saat_ini',
         'stok_minimum',

@@ -27,6 +27,9 @@ class ReferensiSeeder extends Seeder
             ['nama' => 'Tunai', 'is_active' => true],
             ['nama' => 'Transfer', 'is_active' => true],
         ];
+
+  
+
         // Insert data into metode_pembelian table
         foreach ($pembelians as $pembelian) {
             MetodePembelian::create($pembelian);
@@ -35,5 +38,7 @@ class ReferensiSeeder extends Seeder
         foreach ($pembayarans as $pembayaran) {
             MetodePembayaran::create($pembayaran);
         }
+
+ 
     }
 }

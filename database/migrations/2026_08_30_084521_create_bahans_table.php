@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('nama', 150);
             $table->string('jenis', 20);
             $table->string('satuan_dasar', 20);
+            $table->integer('netto')->nullable();
             $table->boolean('monitor_stok')->default(false);
             $table->decimal('stok_saat_ini', 15, 4)->default(0);
             $table->decimal('stok_minimum', 15, 4)->default(0);

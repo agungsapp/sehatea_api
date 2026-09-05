@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             ProdukSeeder::class,
             BahanSeeder::class,
             ReferensiSeeder::class,
+            StarterSeeder::class,
         ]);
     }
 }

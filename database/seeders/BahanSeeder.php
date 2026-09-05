@@ -44,7 +44,7 @@ class BahanSeeder extends Seeder
             'hasil_jumlah' => 8000,
             'hasil_satuan' => 'ml',
             'is_active' => true,
-        ])->details()->createMany([
+        ])->detail()->createMany([
             ['bahan_id' => $tehTongji->id, 'jumlah' => 80],
             ['bahan_id' => $dandang->id, 'jumlah' => 40],
             ['bahan_id' => $air->id, 'jumlah' => 8000],
@@ -54,7 +54,7 @@ class BahanSeeder extends Seeder
             'hasil_jumlah' => 1000,
             'hasil_satuan' => 'ml',
             'is_active' => true,
-        ])->details()->createMany([
+        ])->detail()->createMany([
             ['bahan_id' => $gula->id, 'jumlah' => 500],
             ['bahan_id' => $air->id, 'jumlah' => 500],
         ]);
