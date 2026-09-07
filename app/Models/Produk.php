@@ -16,4 +16,9 @@ class Produk extends Model
     // {
     //     return $this->hasMany(Komposisi::class, 'produk_id');
     // }
+
+    public function komposisiProduk()
+    {
+        return $this->hasMany(KomposisiProduk::class, 'produk_id');
+    }
 }

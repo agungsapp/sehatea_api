@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\KategoriPengeluaran;
+use App\Models\Satuan;
+use App\Models\Supplier;
 use Illuminate\Database\Seeder;
 
 class StarterSeeder extends Seeder
@@ -12,6 +14,20 @@ class StarterSeeder extends Seeder
      */
     public function run(): void
     {
+
+        $satuans = [
+            ['nama' => 'gram', 'kode' => 'gr', 'is_active' => true],
+            ['nama' => 'pcs', 'kode' => 'pcs', 'is_active' => true],
+            ['nama' => 'kilogram', 'kode' => 'kg', 'is_active' => true],
+            ['nama' => 'liter', 'kode' => 'ltr', 'is_active' => true],
+            ['nama' => 'mililiter', 'kode' => 'ml', 'is_active' => true],
+            ['nama' => 'sachet', 'kode' => 'sachet', 'is_active' => true],
+            ['nama' => 'botol', 'kode' => 'botol', 'is_active' => true],
+            ['nama' => 'kaleng', 'kode' => 'kaleng', 'is_active' => true],
+            ['nama' => 'dus', 'kode' => 'dus', 'is_active' => true],
+            ['nama' => 'slop', 'kode' => 'slop', 'is_active' => true],
+        ];
+
         $kategoriPengeluaran = [
             ['nama' => 'Bahan Baku', 'is_active' => true],
             ['nama' => 'Gaji Karyawan', 'is_operasional' => true, 'is_active' => true],
@@ -29,12 +45,16 @@ class StarterSeeder extends Seeder
             ['nama' => 'Taqwa Mulia'],
         ];
 
+        foreach ($satuans as $satuan) {
+            Satuan::create($satuan);
+        }
+
         foreach ($kategoriPengeluaran as $kategori) {
-            \App\Models\KategoriPengeluaran::create($kategori);
+            KategoriPengeluaran::create($kategori);
         }
 
         foreach ($supplier as $supp) {
-            \App\Models\Supplier::create($supp);
+            Supplier::create($supp);
         }
     }
 }

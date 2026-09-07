@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('kategori_pengeluaran_id')->constrained('kategori_pengeluaran');
             $table->foreignId('bahan_id')->constrained('bahan');
             $table->integer('qty')->default(0);
-            $table->string('satuan');
+            $table->string('satuan_id')->nullable()->constrained('satuan')->nullOnDelete();
             $table->decimal('total', 15, 2);
             $table->text('keterangan')->nullable();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();

@@ -26,10 +26,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
+            StarterSeeder::class,
             ProdukSeeder::class,
             BahanSeeder::class,
             ReferensiSeeder::class,
-            StarterSeeder::class,
+            KonversiBahanSeeder::class,
         ]);
     }
 }

@@ -10,6 +10,7 @@ class Pembelian extends Model
     use SoftDeletes;
 
     protected $table = 'pembelian';
+
     protected $guarded = ['id'];
 
     public function kategoriPengeluaran()
@@ -20,6 +21,11 @@ class Pembelian extends Model
     public function bahan()
     {
         return $this->belongsTo(Bahan::class, 'bahan_id');
+    }
+
+    public function satuan()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_id');
     }
 
     public function user()

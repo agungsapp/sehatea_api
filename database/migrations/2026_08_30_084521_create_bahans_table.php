@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('nama', 150);
             $table->string('jenis', 20);
-            $table->string('satuan_dasar', 20);
+            $table->foreignId('satuan_id')->constrained('satuan')->onDelete('restrict');
+            $table->decimal('harga_satuan', 15, 2)->default(0);
             $table->integer('netto')->nullable();
             $table->boolean('monitor_stok')->default(false);
             $table->decimal('stok_saat_ini', 15, 4)->default(0);

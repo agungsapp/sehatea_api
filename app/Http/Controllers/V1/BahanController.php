@@ -13,10 +13,10 @@ class BahanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Bahan::query();
+        $query = Bahan::with('satuan');
 
         if ($request->filled('search')) {
-            $query->where('nama', 'like', '%' . $request->search . '%');
+            $query->where('nama', 'like', '%'.$request->search.'%');
         }
 
         if ($request->filled('jenis')) {
@@ -53,7 +53,7 @@ class BahanController extends Controller
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:150', 'unique:bahan,nama'],
             'jenis' => ['required', Rule::enum(JenisBahan::class)],
-            'satuan_dasar' => ['required', 'string', 'max:20'],
+            'satuan_id' => ['required', 'exists:satuan,id'],
             'monitor_stok' => ['sometimes', 'boolean'],
             'stok_saat_ini' => ['sometimes', 'numeric', 'min:0'],
             'stok_minimum' => ['sometimes', 'numeric', 'min:0'],
@@ -63,7 +63,7 @@ class BahanController extends Controller
         $bahan = Bahan::create([
             'nama' => $validated['nama'],
             'jenis' => $validated['jenis'],
-            'satuan_dasar' => $validated['satuan_dasar'],
+            'satuan_id' => $validated['satuan_id'],
             'monitor_stok' => $validated['monitor_stok'] ?? false,
             'stok_saat_ini' => $validated['stok_saat_ini'] ?? 0,
             'stok_minimum' => $validated['stok_minimum'] ?? 0,
@@ -79,7 +79,7 @@ class BahanController extends Controller
 
     public function show(Bahan $bahan)
     {
-        $bahan->load(['komposisi.detail.bahan']);
+        $bahan->load(['satuan', 'komposisi.detail.bahan']);
 
         return response()->json([
             'success' => true,
@@ -88,7 +88,12 @@ class BahanController extends Controller
                 'id' => $bahan->id,
                 'nama' => $bahan->nama,
                 'jenis' => $bahan->jenis,
-                'satuan_dasar' => $bahan->satuan_dasar,
+                'satuan_id' => $bahan->satuan_id,
+                'satuan' => $bahan->satuan ? [
+                    'id' => $bahan->satuan->id,
+                    'kode' => $bahan->satuan->kode,
+                    'nama' => $bahan->satuan->nama,
+                ] : null,
                 'monitor_stok' => $bahan->monitor_stok,
                 'stok' => (float) $bahan->stok_saat_ini,
                 'stok_minimum' => (float) $bahan->stok_minimum,
@@ -98,11 +103,11 @@ class BahanController extends Controller
                         'jumlah' => (float) $bahan->komposisi->hasil_jumlah,
                         'satuan' => $bahan->komposisi->hasil_satuan,
                     ],
-                    'detail' => $bahan->komposisi->detail->map(fn($detail) => [
+                    'detail' => $bahan->komposisi->detail->map(fn ($detail) => [
                         'bahan_id' => $detail->bahan_id,
                         'nama' => $detail->bahan->nama,
                         'jumlah' => (float) $detail->jumlah,
-                        'satuan' => $detail->bahan->satuan_dasar,
+                        'satuan' => $detail->bahan->satuan->nama,
                     ])->values(),
                 ] : null,
             ],
@@ -114,7 +119,7 @@ class BahanController extends Controller
         $validated = $request->validate([
             'nama' => ['sometimes', 'required', 'string', 'max:150', Rule::unique('bahan', 'nama')->ignore($bahan->id)],
             'jenis' => ['sometimes', Rule::enum(JenisBahan::class)],
-            'satuan_dasar' => ['sometimes', 'required', 'string', 'max:20'],
+            'satuan_id' => ['sometimes', 'required', 'exists:satuan,id'],
             'monitor_stok' => ['sometimes', 'boolean'],
             'stok_saat_ini' => ['sometimes', 'numeric'],
             'stok_minimum' => ['sometimes', 'numeric', 'min:0'],

@@ -16,7 +16,8 @@ class Bahan extends Model
     protected $fillable = [
         'nama',
         'jenis',
-        'satuan_dasar',
+        'satuan_id',
+        'harga_satuan',
         'netto',
         'monitor_stok',
         'stok_saat_ini',
@@ -27,6 +28,7 @@ class Bahan extends Model
     protected $casts = [
         'jenis' => JenisBahan::class,
         'monitor_stok' => 'boolean',
+        'harga_satuan' => 'decimal:2',
         'stok_saat_ini' => 'decimal:4',
         'stok_minimum' => 'decimal:4',
         'is_active' => 'boolean',
@@ -35,5 +37,15 @@ class Bahan extends Model
     public function komposisi()
     {
         return $this->hasOne(KomposisiBahan::class);
+    }
+
+    public function konversi()
+    {
+        return $this->hasMany(KonversiBahan::class);
+    }
+
+    public function satuan()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_id');
     }
 }
