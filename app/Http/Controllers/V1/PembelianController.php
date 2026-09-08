@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\V1;
 
+use App\Enums\JenisBahan;
 use App\Http\Controllers\Controller;
 use App\Models\Bahan;
 use App\Models\Pembelian;
+use App\Services\Bahan\BahanOlahanService;
 use App\Services\Bahan\BahanStockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -15,10 +18,12 @@ use Throwable;
 class PembelianController extends Controller
 {
     protected BahanStockService $bahanStockService;
+    protected BahanOlahanService $bahanOlahanService;
 
-    public function __construct(BahanStockService $bahanStockService)
+    public function __construct(BahanStockService $bahanStockService, BahanOlahanService $bahanOlahanService)
     {
         $this->bahanStockService = $bahanStockService;
+        $this->bahanOlahanService = $bahanOlahanService;
     }
 
     /**
@@ -137,6 +142,10 @@ class PembelianController extends Controller
                     user: auth()->user(),
                     hargaSatuan: $hargaSatuan
                 );
+                Log::info('debug', [$bahan->jenis === JenisBahan::OLAHAN]);
+                if ($bahan->jenis === JenisBahan::OLAHAN) {
+                    $this->bahanOlahanService->syncAfterStockChange($bahan);
+                }
 
                 return $pembelian;
             });
@@ -250,6 +259,10 @@ class PembelianController extends Controller
                     hargaSatuan: $hargaSatuanBaru   // ← harga diupdate di sini
                 );
 
+                if ($bahanBaru->jenis === JenisBahan::OLAHAN) {
+                    $this->bahanOlahanService->syncAfterStockChange($bahanBaru);
+                }
+
                 return $pembelian;
             });
 
@@ -301,6 +314,9 @@ class PembelianController extends Controller
                     keterangan: "Hapus Pembelian {$pembelian->kode}",
                     user: auth()->user()
                 );
+                if ($bahan->jenis === JenisBahan::OLAHAN) {
+                    $this->bahanOlahanService->syncAfterPurchase($bahan);
+                }
 
                 $pembelian->delete();
             });

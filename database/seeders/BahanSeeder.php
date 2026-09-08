@@ -42,7 +42,7 @@ class BahanSeeder extends Seeder
 
         $airTeh->komposisi()->create([
             'hasil_jumlah' => 8000,
-            'hasil_satuan' => 'ml',
+            'satuan_id' => 5,
             'is_active' => true,
         ])->detail()->createMany([
             ['bahan_id' => $tehTongji->id, 'jumlah' => 80],
@@ -52,7 +52,7 @@ class BahanSeeder extends Seeder
 
         $gulaCair->komposisi()->create([
             'hasil_jumlah' => 1000,
-            'hasil_satuan' => 'ml',
+            'satuan_id' => 5,
             'is_active' => true,
         ])->detail()->createMany([
             ['bahan_id' => $gula->id, 'jumlah' => 500],

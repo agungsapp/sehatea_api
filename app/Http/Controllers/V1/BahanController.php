@@ -79,7 +79,9 @@ class BahanController extends Controller
 
     public function show(Bahan $bahan)
     {
-        $bahan->load(['satuan', 'komposisi.detail.bahan']);
+        $bahan->load(['satuan', 'komposisi.detail.bahan', 'komposisi.satuan']);
+
+//        return  response()->json($bahan->komposisi->satuan->kode);
 
         return response()->json([
             'success' => true,
@@ -101,13 +103,13 @@ class BahanController extends Controller
                 'komposisi' => $bahan->komposisi ? [
                     'hasil' => [
                         'jumlah' => (float) $bahan->komposisi->hasil_jumlah,
-                        'satuan' => $bahan->komposisi->hasil_satuan,
+                        'satuan' => $bahan->komposisi->satuan->kode,
                     ],
                     'detail' => $bahan->komposisi->detail->map(fn ($detail) => [
                         'bahan_id' => $detail->bahan_id,
                         'nama' => $detail->bahan->nama,
                         'jumlah' => (float) $detail->jumlah,
-                        'satuan' => $detail->bahan->satuan->nama,
+                        'satuan' => $detail->bahan->satuan->kode,
                     ])->values(),
                 ] : null,
             ],
@@ -174,7 +176,7 @@ class BahanController extends Controller
 
         $validated = $request->validate([
             'hasil_jumlah' => ['required', 'numeric', 'gt:0'],
-            'hasil_satuan' => ['required', 'string', 'max:20'],
+            'satuan_id' => ['required', 'integer', 'exists:satuan,id'],
             'detail_komposisi' => ['required', 'array', 'min:1'],
             'detail_komposisi.*.bahan_id' => ['required', 'integer', 'exists:bahan,id'],
             'detail_komposisi.*.jumlah' => ['required', 'numeric', 'gt:0'],
@@ -193,7 +195,7 @@ class BahanController extends Controller
             ['bahan_id' => $bahan->id],
             [
                 'hasil_jumlah' => $validated['hasil_jumlah'],
-                'hasil_satuan' => $validated['hasil_satuan'],
+                'satuan_id' => $validated['satuan_id'],
                 'is_active' => true,
             ]
         );

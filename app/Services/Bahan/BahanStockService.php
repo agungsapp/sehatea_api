@@ -63,12 +63,6 @@ class BahanStockService
                         $bahan->harga_satuan = $hargaSatuan;
                     }
                 } else {
-                    if ($stokSebelum < $qty) {
-                        throw new RuntimeException(
-                            "Stok \"{$bahan->nama}\" tidak mencukupi. ".
-                                "Stok saat ini: {$stokSebelum}, diminta: {$qty}."
-                        );
-                    }
                     $stokSesudah = $stokSebelum - $qty;
                 }
 

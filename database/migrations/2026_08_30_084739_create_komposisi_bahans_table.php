@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('bahan_id')->constrained('bahan')->restrictOnDelete();
             $table->decimal('hasil_jumlah', 15, 4);
-            $table->string('hasil_satuan', 20);
+            $table->foreignId('satuan_id')->constrained('satuan')->restrictOnDelete();
+//            $table->string('hasil_satuan', 20);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();
