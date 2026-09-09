@@ -50,6 +50,7 @@ Route::prefix('v1')->group(function () {
         Route::get('pembelian/satuan', [PembelianController::class, 'satuanByBahan']);
         Route::apiResource('pembelian', PembelianController::class);
 
+        Route::get('produk/komposisi', [KomposisiProdukController::class, 'getAllProdukKomposisi']);
         Route::get('produk/{produk}/komposisi', [KomposisiProdukController::class, 'index']);
         Route::post('produk/{produk}/komposisi', [KomposisiProdukController::class, 'store']);
         Route::get('produk/{produk}/komposisi/{komposisi}', [KomposisiProdukController::class, 'show']);

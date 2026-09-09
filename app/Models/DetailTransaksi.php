@@ -12,6 +12,7 @@ class DetailTransaksi extends Model
         'transaksi_id',
         'produk_id',
         'harga',
+        'hpp',
         'qty',
         'subtotal',
         'user_id',

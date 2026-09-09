@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('transaksi_id')->constrained('transaksi')->onDelete('CASCADE');
             $table->foreignId('produk_id')->constrained('produk')->onDelete('RESTRICT');
             $table->integer('harga');
+            $table->decimal('hpp', 15, 4)->nullable();
             $table->integer('qty');
             $table->integer('subtotal');
             $table->foreignId('user_id')->constrained('users')->onDelete('RESTRICT');

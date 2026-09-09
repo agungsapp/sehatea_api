@@ -19,6 +19,6 @@ class Produk extends Model
 
     public function komposisiProduk()
     {
-        return $this->hasMany(KomposisiProduk::class, 'produk_id');
+        return $this->hasMany(KomposisiProduk::class, 'produk_id')->whereNull('deleted_at');
     }
 }

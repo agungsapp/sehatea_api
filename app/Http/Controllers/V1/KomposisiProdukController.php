@@ -10,6 +10,22 @@ use Illuminate\Support\Facades\DB;
 
 class KomposisiProdukController extends Controller
 {
+    /**
+     * Semua produk (card-based), masing-masing dengan list komposisi (semua versi).
+     */
+    public function getAllProdukKomposisi()
+    {
+        $produk = Produk::with('komposisiProduk.detail.bahan')
+            ->orderByDesc('id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Semua komposisi produk berhasil diambil.',
+            'data' => $produk,
+        ]);
+    }
+
     public function index(Produk $produk)
     {
         $komposisi = $produk->komposisiProduk()
@@ -37,10 +53,11 @@ class KomposisiProdukController extends Controller
         $komposisi = DB::transaction(function () use ($validated, $produk) {
             $isActive = $validated['is_active'] ?? true;
 
+            // Jika komposisi baru mau diaktifkan, nonaktifkan yang lain dulu
             if ($isActive) {
-                $produk->komposisiProduk()->update([
-                    'is_active' => false,
-                ]);
+                $produk->komposisiProduk()
+                    ->whereNull('deleted_at')
+                    ->update(['is_active' => false]);
             }
 
             $komposisi = $produk->komposisiProduk()->create([
@@ -48,12 +65,8 @@ class KomposisiProdukController extends Controller
                 'is_active' => $isActive,
             ]);
 
-            foreach ($validated['detail'] as $detail) {
-                $komposisi->detail()->create([
-                    'bahan_id' => $detail['bahan_id'],
-                    'jumlah' => $detail['jumlah'],
-                ]);
-            }
+            // Langsung createMany (validasi sudah min:1)
+            $komposisi->detail()->createMany($validated['detail']);
 
             return $komposisi;
         });
@@ -96,14 +109,11 @@ class KomposisiProdukController extends Controller
                 'nama' => $validated['nama'],
             ]);
 
-            $komposisi->detail()->delete();
+            // Hapus detail lama
+            $komposisi->detail()->forceDelete();
 
-            foreach ($validated['detail'] as $detail) {
-                $komposisi->detail()->create([
-                    'bahan_id' => $detail['bahan_id'],
-                    'jumlah' => $detail['jumlah'],
-                ]);
-            }
+            // Karena validasi sudah min:1, langsung create saja
+            $komposisi->detail()->createMany($validated['detail']);
         });
 
         $komposisi->load('detail.bahan');
@@ -119,7 +129,27 @@ class KomposisiProdukController extends Controller
     {
         abort_unless($komposisi->produk_id === $produk->id, 404);
 
-        $komposisi->delete();
+        DB::transaction(function () use ($komposisi) {
+            $komposisi->detail()->delete();
+
+            $isActive = (bool) $komposisi->is_active;
+
+            $komposisi->delete();
+
+            // Jika komposisi aktif dihapus, aktifkan resep yang paling baru.
+            if ($isActive) {
+                $replacement = KomposisiProduk::withTrashed()
+                    ->where('produk_id', $komposisi->produk_id)
+                    ->whereKeyNot($komposisi->id)
+                    ->whereNull('deleted_at')
+                    ->latest('id')
+                    ->first();
+
+                if ($replacement) {
+                    $replacement->update(['is_active' => true]);
+                }
+            }
+        });
 
         return response()->json([
             'success' => true,
@@ -127,25 +157,32 @@ class KomposisiProdukController extends Controller
         ]);
     }
 
+    /**
+     * Aktifkan komposisi. Jika komposisi numpum sudah aktif, aksi dino nonaktifkan
+     * (tambahkan support toggle on/off tetap satu saja aktif per produk).
+     */
     public function activate(Produk $produk, KomposisiProduk $komposisi)
     {
         abort_unless($komposisi->produk_id === $produk->id, 404);
 
         DB::transaction(function () use ($produk, $komposisi) {
-            $produk->komposisiProduk()->update([
-                'is_active' => false,
-            ]);
+            if ((bool) $komposisi->is_active) {
+                $komposisi->update(['is_active' => false]);
+            } else {
+                $produk->komposisiProduk()
+                    ->whereKeyNot($komposisi->id)
+                    ->whereNull('deleted_at')
+                    ->update(['is_active' => false]);
 
-            $komposisi->update([
-                'is_active' => true,
-            ]);
+                $komposisi->update(['is_active' => true]);
+            }
         });
 
         $komposisi->load('detail.bahan');
 
         return response()->json([
             'success' => true,
-            'message' => 'Komposisi produk berhasil diaktifkan.',
+            'message' => 'Status komposisi produk berhasil diperbarui.',
             'data' => $komposisi,
         ]);
     }

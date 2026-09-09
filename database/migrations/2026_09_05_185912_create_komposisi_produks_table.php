@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['produk_id']);
+            // $table->unique(['produk_id']);
             $table->index(['produk_id', 'is_active']);
         });
     }
