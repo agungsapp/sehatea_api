@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TransaksiResource;
 use App\Models\Produk;
 use App\Models\Transaksi;
+use App\Services\Bahan\BahanConsumptionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,8 @@ use Illuminate\Support\Str;
 
 class TransaksiController extends Controller
 {
+    public function __construct(private BahanConsumptionService $bahanConsumptionService) {}
+
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -29,9 +32,9 @@ class TransaksiController extends Controller
             'detailTransaksi.produk:id,nama',
             'user:id,name',
         ]);
-        if (!empty($validated['date'])) {
+        if (! empty($validated['date'])) {
             $query->whereDate('created_at', $validated['date']);
-        } elseif (!empty($validated['start_date']) || !empty($validated['end_date'])) {
+        } elseif (! empty($validated['start_date']) || ! empty($validated['end_date'])) {
             $startDate = $validated['start_date'] ?? $validated['end_date'];
             $endDate = $validated['end_date'] ?? $validated['start_date'];
             $query->whereBetween('created_at', [
@@ -42,11 +45,13 @@ class TransaksiController extends Controller
             $query->whereDate('created_at', Carbon::today());
         }
         $transaksi = $query->latest('id')->paginate($perPage);
+
         return TransaksiResource::collection($transaksi)->additional([
             'success' => true,
             'message' => 'Data transaksi berhasil diambil.',
         ]);
     }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -73,7 +78,7 @@ class TransaksiController extends Controller
                 $grandTotal += $produk->harga * $qty;
             }
             $transaksi = Transaksi::create([
-                'kode' => 'TRX-' . Str::upper(Str::random(8)),
+                'kode' => 'TRX-'.Str::upper(Str::random(8)),
                 'grand_total' => $grandTotal,
                 'metode_pembayaran_id' => $validated['metode_pembayaran_id'],
                 'metode_pembelian_id' => $validated['metode_pembelian_id'],
@@ -90,8 +95,17 @@ class TransaksiController extends Controller
                     'user_id' => auth()->id(),
                 ]);
             }
+
             return $transaksi;
         });
+
+        // Pengurangan stok bahan: OPTIONAL. Tidak boleh membuat transaksi gagal.
+        $this->bahanConsumptionService->deductForTransaction(
+            produkIds: $validated['produk_id'],
+            jumlahs: $validated['jumlah'],
+            user: auth()->user()
+        );
+
         $transaksi->load([
             'metodePembayaran:id,nama',
             'metodePembelian:id,nama',
@@ -99,11 +113,13 @@ class TransaksiController extends Controller
             'detailTransaksi.produk:id,nama',
             'user:id,name',
         ]);
+
         return (new TransaksiResource($transaksi))->additional([
             'success' => true,
             'message' => 'Transaksi berhasil dibuat.',
         ])->response()->setStatusCode(201);
     }
+
     public function show(Transaksi $transaksi)
     {
         $transaksi->load([
@@ -113,11 +129,13 @@ class TransaksiController extends Controller
             'detailTransaksi.produk:id,nama',
             'user:id,name',
         ]);
+
         return (new TransaksiResource($transaksi))->additional([
             'success' => true,
             'message' => 'Data transaksi berhasil diambil.',
         ]);
     }
+
     public function update(Request $request, Transaksi $transaksi)
     {
         $validated = $request->validate([
@@ -167,17 +185,20 @@ class TransaksiController extends Controller
             'detailTransaksi.produk:id,nama',
             'user:id,name',
         ]);
+
         return (new TransaksiResource($transaksi))->additional([
             'success' => true,
             'message' => 'Transaksi berhasil diperbarui.',
         ]);
     }
+
     public function destroy(Transaksi $transaksi)
     {
         DB::transaction(function () use ($transaksi) {
             $transaksi->detailTransaksi()->delete();
             $transaksi->delete();
         });
+
         return response()->json([
             'success' => true,
             'message' => 'Transaksi berhasil dihapus.',
