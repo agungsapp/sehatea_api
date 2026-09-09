@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Pengurangan stok bahan saat penjualan produk (transaksi).
+ * Pengurangan / kembalikan stok bahan saat penjualan produk (transaksi).
  *
  * Stok pengurangan adalah OPTIONAL: transaksi tidak boleh gagal hanya karena
  * pengurangan stok gagal. Semua error yang terjadi di service ini hanya dilog
@@ -28,6 +28,44 @@ class BahanConsumptionService
      */
     public function deductForTransaction(iterable $produkIds, iterable $jumlahs, ?User $user = null): void
     {
+        $this->adjustForTransaction($produkIds, $jumlahs, $user, 'decrease');
+    }
+
+    /**
+     * Kembalikan stok bahan penyusun produk (waste / hapus transaksi).
+     * Mirip dengan deductForTransaction, hanya jenis dino 'increase'.
+     */
+    public function restoreForTransaction(iterable $produkIds, iterable $jumlahs, ?User $user = null): void
+    {
+        $this->adjustForTransaction($produkIds, $jumlahs, $user, 'increase');
+    }
+
+    /**
+     * Adjust stok ketika transaksi diperbarui:
+     * 1) Kembalikan stok transaksi lama.
+     * 2) Kurangi stok transaksi baru.
+     * Dua-dua OPTIONAL.
+     */
+    public function adjustForUpdate(
+        iterable $oldProdukIds,
+        iterable $oldJumlahs,
+        iterable $newProdukIds,
+        iterable $newJumlahs,
+        ?User $user = null
+    ): void {
+        $this->restoreForTransaction($oldProdukIds, $oldJumlahs, $user);
+        $this->deductForTransaction($newProdukIds, $newJumlahs, $user);
+    }
+
+    /**
+     * Core logic: mengurangi (decrease) atau kembalikan (increase) stok.
+     */
+    protected function adjustForTransaction(
+        iterable $produkIds,
+        iterable $jumlahs,
+        ?User $user,
+        string $type
+    ): void {
         try {
             $produks = Produk::whereIn('id', $produkIds)->get()->keyBy('id');
 
@@ -52,7 +90,7 @@ class BahanConsumptionService
                 return;
             }
 
-            DB::transaction(function () use ($byBahan, $user) {
+            DB::transaction(function () use ($byBahan, $user, $type) {
                 $bahanList = Bahan::whereIn('id', $byBahan->keys())
                     ->lockForUpdate()
                     ->get()
@@ -65,17 +103,29 @@ class BahanConsumptionService
                         continue;
                     }
 
-                    $this->bahanStockService->decrease(
-                        bahan: $bahan,
-                        qty: (float) $qty,
-                        keterangan: 'Penjualan produk (transaksi)',
-                        user: $user
-                    );
+                    $qty = (float) $qty;
+
+                    if ($type === 'decrease') {
+                        $this->bahanStockService->decrease(
+                            bahan: $bahan,
+                            qty: $qty,
+                            keterangan: 'Penjualan produk (transaksi)',
+                            user: $user
+                        );
+                    } else {
+                        $this->bahanStockService->increase(
+                            bahan: $bahan,
+                            qty: $qty,
+                            keterangan: 'Restok produk (transaksi)',
+                            user: $user
+                        );
+                    }
                 }
             });
         } catch (Throwable $e) {
-            // Stok konsumsi OPTIONAL: transaksi tetap jalan.
-            Log::error('Gagal mengurangi stok bahan saat transaksi', [
+            // Stok pengurangan OPTIONAL: transaksi tetap jalan.
+            Log::error('Gagal menyesuaikan stok bahan saat transaksi', [
+                'type' => $type,
                 'produk_ids' => $produkIds,
                 'jumlahs' => $jumlahs,
                 'error' => $e->getMessage(),

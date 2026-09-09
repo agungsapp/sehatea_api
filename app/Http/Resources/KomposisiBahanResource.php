@@ -12,13 +12,13 @@ class KomposisiBahanResource extends JsonResource
         return [
             'hasil' => [
                 'jumlah' => (float) $this->hasil_jumlah,
-                'satuan' => $this->satuan_id,
+                'satuan' => $this->satuan->kode,
             ],
-            'detail' => $this->whenLoaded('detail', fn () => $this->detail->map(fn ($detail) => [
+            'detail' => $this->whenLoaded('detail', fn() => $this->detail->map(fn($detail) => [
                 'bahan_id' => $detail->bahan_id,
                 'nama' => $detail->bahan->nama,
                 'jumlah' => (float) $detail->jumlah,
-                'satuan' => $detail->bahan->satuan->nama,
+                'satuan' => $detail->bahan->satuan->kode,
             ])->values()),
         ];
     }

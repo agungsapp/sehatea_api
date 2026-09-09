@@ -152,6 +152,10 @@ class TransaksiController extends Controller
                 'message' => 'Jumlah produk dan jumlah qty tidak sesuai.',
             ], 422);
         }
+        $oldDetail = $transaksi->detailTransaksi()->get();
+        $oldProdukIds = collect($oldDetail->map(fn ($d) => $d->produk_id));
+        $oldJumlahs = collect($oldDetail->map(fn ($d) => (int) $d->qty));
+
         DB::transaction(function () use ($validated, $transaksi) {
             $produkIds = $validated['produk_id'];
             $produks = Produk::whereIn('id', $produkIds)->get()->keyBy('id');
@@ -160,7 +164,7 @@ class TransaksiController extends Controller
                 'metode_pembayaran_id' => $validated['metode_pembayaran_id'],
                 'metode_pembelian_id' => $validated['metode_pembelian_id'],
             ]);
-            $transaksi->detailTransaksi()->delete();
+            $transaksi->detailTransaksi()->forceDelete();
             foreach ($produkIds as $index => $produkId) {
                 $produk = $produks->get($produkId);
                 $qty = $validated['jumlah'][$index];
@@ -178,6 +182,16 @@ class TransaksiController extends Controller
                 'grand_total' => $grandTotal,
             ]);
         });
+
+        // Pengurangan / kembalikan stok: OPTIONAL.
+        $this->bahanConsumptionService->adjustForUpdate(
+            oldProdukIds: $oldProdukIds,
+            oldJumlahs: $oldJumlahs,
+            newProdukIds: $validated['produk_id'],
+            newJumlahs: $validated['jumlah'],
+            user: auth()->user()
+        );
+
         $transaksi->load([
             'metodePembayaran:id,nama',
             'metodePembelian:id,nama',
@@ -194,10 +208,21 @@ class TransaksiController extends Controller
 
     public function destroy(Transaksi $transaksi)
     {
+        $oldDetail = $transaksi->detailTransaksi()->get();
+        $oldProdukIds = collect($oldDetail->map(fn ($d) => $d->produk_id));
+        $oldJumlahs = collect($oldDetail->map(fn ($d) => (int) $d->qty));
+
         DB::transaction(function () use ($transaksi) {
-            $transaksi->detailTransaksi()->delete();
+            $transaksi->detailTransaksi()->forceDelete();
             $transaksi->delete();
         });
+
+        // Kembalikan stok: OPTIONAL.
+        $this->bahanConsumptionService->restoreForTransaction(
+            produkIds: $oldProdukIds,
+            jumlahs: $oldJumlahs,
+            user: auth()->user()
+        );
 
         return response()->json([
             'success' => true,

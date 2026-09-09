@@ -16,7 +16,7 @@ class BahanController extends Controller
         $query = Bahan::with('satuan');
 
         if ($request->filled('search')) {
-            $query->where('nama', 'like', '%'.$request->search.'%');
+            $query->where('nama', 'like', '%' . $request->search . '%');
         }
 
         if ($request->filled('jenis')) {
@@ -81,7 +81,7 @@ class BahanController extends Controller
     {
         $bahan->load(['satuan', 'komposisi.detail.bahan', 'komposisi.satuan']);
 
-//        return  response()->json($bahan->komposisi->satuan->kode);
+        //        return  response()->json($bahan->komposisi->satuan->kode);
 
         return response()->json([
             'success' => true,
@@ -90,6 +90,9 @@ class BahanController extends Controller
                 'id' => $bahan->id,
                 'nama' => $bahan->nama,
                 'jenis' => $bahan->jenis,
+                'stok_minimum' => $bahan->stok_minimum,
+                'created_at' => $bahan->created_at,
+                'updated_at' => $bahan->updated_at,
                 'satuan_id' => $bahan->satuan_id,
                 'satuan' => $bahan->satuan ? [
                     'id' => $bahan->satuan->id,
@@ -105,7 +108,7 @@ class BahanController extends Controller
                         'jumlah' => (float) $bahan->komposisi->hasil_jumlah,
                         'satuan' => $bahan->komposisi->satuan->kode,
                     ],
-                    'detail' => $bahan->komposisi->detail->map(fn ($detail) => [
+                    'detail' => $bahan->komposisi->detail->map(fn($detail) => [
                         'bahan_id' => $detail->bahan_id,
                         'nama' => $detail->bahan->nama,
                         'jumlah' => (float) $detail->jumlah,
