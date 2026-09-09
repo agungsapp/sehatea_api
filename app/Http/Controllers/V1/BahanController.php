@@ -16,7 +16,7 @@ class BahanController extends Controller
         $query = Bahan::with('satuan');
 
         if ($request->filled('search')) {
-            $query->where('nama', 'like', '%' . $request->search . '%');
+            $query->where('nama', 'like', '%'.$request->search.'%');
         }
 
         if ($request->filled('jenis')) {
@@ -54,6 +54,7 @@ class BahanController extends Controller
             'nama' => ['required', 'string', 'max:150', 'unique:bahan,nama'],
             'jenis' => ['required', Rule::enum(JenisBahan::class)],
             'satuan_id' => ['required', 'exists:satuan,id'],
+            'netto' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'monitor_stok' => ['sometimes', 'boolean'],
             'stok_saat_ini' => ['sometimes', 'numeric', 'min:0'],
             'stok_minimum' => ['sometimes', 'numeric', 'min:0'],
@@ -64,6 +65,7 @@ class BahanController extends Controller
             'nama' => $validated['nama'],
             'jenis' => $validated['jenis'],
             'satuan_id' => $validated['satuan_id'],
+            'netto' => $validated['netto'],
             'monitor_stok' => $validated['monitor_stok'] ?? false,
             'stok_saat_ini' => $validated['stok_saat_ini'] ?? 0,
             'stok_minimum' => $validated['stok_minimum'] ?? 0,
@@ -100,15 +102,17 @@ class BahanController extends Controller
                     'nama' => $bahan->satuan->nama,
                 ] : null,
                 'monitor_stok' => $bahan->monitor_stok,
+                'netto' => $bahan->netto,
                 'stok' => (float) $bahan->stok_saat_ini,
                 'stok_minimum' => (float) $bahan->stok_minimum,
                 'is_active' => $bahan->is_active,
                 'komposisi' => $bahan->komposisi ? [
                     'hasil' => [
                         'jumlah' => (float) $bahan->komposisi->hasil_jumlah,
-                        'satuan' => $bahan->komposisi->satuan->kode,
+                        'satuan' => $bahan->komposisi->satuan?->kode,
+                        'satuan_id' => $bahan->komposisi->satuan_id,
                     ],
-                    'detail' => $bahan->komposisi->detail->map(fn($detail) => [
+                    'detail' => $bahan->komposisi->detail->map(fn ($detail) => [
                         'bahan_id' => $detail->bahan_id,
                         'nama' => $detail->bahan->nama,
                         'jumlah' => (float) $detail->jumlah,
@@ -125,6 +129,7 @@ class BahanController extends Controller
             'nama' => ['sometimes', 'required', 'string', 'max:150', Rule::unique('bahan', 'nama')->ignore($bahan->id)],
             'jenis' => ['sometimes', Rule::enum(JenisBahan::class)],
             'satuan_id' => ['sometimes', 'required', 'exists:satuan,id'],
+            'netto' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'monitor_stok' => ['sometimes', 'boolean'],
             'stok_saat_ini' => ['sometimes', 'numeric'],
             'stok_minimum' => ['sometimes', 'numeric', 'min:0'],
